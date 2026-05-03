@@ -1,8 +1,12 @@
 import jwt from 'jsonwebtoken';
 import { Role } from '@/contexts/AuthContext';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || 'super-secret-refresh-key';
+const JWT_SECRET = process.env.JWT_SECRET as string;
+const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
+
+if (!JWT_SECRET || !REFRESH_SECRET) {
+  throw new Error('JWT_SECRET and REFRESH_SECRET must be set in environment variables');
+}
 
 export interface AccessTokenPayload {
   userId: string;

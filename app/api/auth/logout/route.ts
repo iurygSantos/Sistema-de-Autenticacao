@@ -12,12 +12,11 @@ export async function POST() {
       const payload = verifyRefreshToken(refreshToken);
       if (payload) {
         // Clear the token in the DB
-        await prisma.user.updateMany({
+        await prisma.session.deleteMany({
           where: { 
-            id: payload.userId,
+            userId: payload.userId,
             refreshToken: refreshToken 
           },
-          data: { refreshToken: null },
         });
       }
       

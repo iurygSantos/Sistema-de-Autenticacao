@@ -40,10 +40,12 @@ export async function POST(request: Request) {
     const accessToken = signAccessToken({ userId: user.id, role: user.role as Role });
     const refreshToken = signRefreshToken({ userId: user.id });
 
-    // Store refresh token in db (optional but good for revocation)
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken },
+    // Store refresh token in db (support multiple sessions)
+    await prisma.session.create({
+      data: {
+        userId: user.id,
+        refreshToken,
+      },
     });
 
     // Set refresh token in HttpOnly cookie

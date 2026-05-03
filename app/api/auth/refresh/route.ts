@@ -20,14 +20,17 @@ export async function POST() {
       return NextResponse.json({ error: 'Invalid refresh token' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+    const session = await prisma.session.findUnique({
+      where: { refreshToken },
+      include: { user: true },
     });
 
-    if (!user || user.refreshToken !== refreshToken) {
+    if (!session || session.userId !== payload.userId) {
       cookieStore.delete('refreshToken');
       return NextResponse.json({ error: 'Invalid refresh token' }, { status: 401 });
     }
+
+    const user = session.user;
 
     // Generate new Access Token
     const accessToken = signAccessToken({ userId: user.id, role: user.role as Role });
