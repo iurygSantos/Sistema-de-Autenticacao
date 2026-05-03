@@ -23,7 +23,7 @@ export default function LoginPage() {
 
     const validation = loginSchema.safeParse({ email, password });
     if (!validation.success) {
-      setError(validation.error.errors[0].message);
+      setError((validation.error as unknown as { errors: { message: string }[] }).errors[0]?.message || 'Validation error');
       return;
     }
 
@@ -44,8 +44,8 @@ export default function LoginPage() {
 
       login(data.accessToken, data.user);
       router.push('/');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     }
   };
 

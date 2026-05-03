@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { api } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export type Role = 'ADMIN' | 'USER';
 
@@ -26,13 +26,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const { data } = await api.get('/me');
         setUser(data.user);
-      } catch (err) {
+      } catch {
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -46,10 +47,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       api.defaults.headers.common['Authorization'] = `Bearer ${customEvent.detail}`;
     };
 
-    const handleForceLogout = () => {
+    const handleForceLogout = async () => {
+      try {
+        await api.post('/auth/logout');
+      } catch (e) {
+        // ignore
+      }
       setUser(null);
       delete api.defaults.headers.common['Authorization'];
-      router.push('/login');
+      if (pathname !== '/login') {
+        router.push('/login');
+      }
     };
 
     if (typeof window !== 'undefined') {
@@ -63,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.removeEventListener('force_logout', handleForceLogout);
       }
     };
-  }, [router]);
+  }, [router, pathname]);
 
   const login = (token: string, userData: User) => {
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -72,11 +80,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      // You can add a call to /api/auth/logout if needed to clear the refresh token cookie
-    } catch(e) {}
-    setUser(null);
-    delete api.defaults.headers.common['Authorization'];
-    router.push('/login');
+      await api.post('/auth/logout');
+    } catch(e) {
+      console.error('Logout failed', e);
+    } finally {
+      setUser(null);
+      delete api.defaults.headers.common['Authorization'];
+      router.push('/login');
+    }
   };
 
   return (

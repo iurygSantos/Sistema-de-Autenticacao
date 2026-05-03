@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/response';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Role } from '@/contexts/AuthContext';
 import bcrypt from 'bcrypt';
 import { signAccessToken, signRefreshToken } from '@/lib/auth';
 import { z } from 'zod';
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
     }
 
     // Generate tokens
-    const accessToken = signAccessToken({ userId: user.id, role: user.role });
+    const accessToken = signAccessToken({ userId: user.id, role: user.role as Role });
     const refreshToken = signRefreshToken({ userId: user.id });
 
     // Store refresh token in db (optional but good for revocation)

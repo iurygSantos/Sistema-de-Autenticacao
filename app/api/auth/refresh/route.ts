@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/response';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Role } from '@/contexts/AuthContext';
 import { signAccessToken, verifyRefreshToken } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
@@ -15,6 +16,7 @@ export async function POST() {
     const payload = verifyRefreshToken(refreshToken) as { userId: string } | null;
 
     if (!payload) {
+      cookieStore.delete('refreshToken');
       return NextResponse.json({ error: 'Invalid refresh token' }, { status: 401 });
     }
 
@@ -23,11 +25,12 @@ export async function POST() {
     });
 
     if (!user || user.refreshToken !== refreshToken) {
+      cookieStore.delete('refreshToken');
       return NextResponse.json({ error: 'Invalid refresh token' }, { status: 401 });
     }
 
     // Generate new Access Token
-    const accessToken = signAccessToken({ userId: user.id, role: user.role });
+    const accessToken = signAccessToken({ userId: user.id, role: user.role as Role });
 
     return NextResponse.json({ accessToken });
   } catch (error) {
